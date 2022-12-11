@@ -1,0 +1,37 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      python: 3.10
+    commands:
+      - echo "Installing dependencies..."
+      - pip install opensearch-py -t lib
+      - pip install requests-aws4auth -t lib
+  build:
+    commands:
+      - echo "Zipping deployment package..."
+      - cd lib
+      - zip -r9 ../deployment_package.zip .
+      - cd ..
+      - mkdir build
+      - mv deployment_package.zip build/deployment_package_lf0.zip
+      - cp build/deployment_package_lf0.zip build/deployment_package_lf1.zip
+      - cp build/deployment_package_lf0.zip build/deployment_package_lf2.zip
+      - mv Lambda/LF0.py lambda_function.py
+      - zip -g build/deployment_package_lf0.zip lambda_function.py
+      - mv Lambda/LF1.py lambda_function.py
+      - zip -g build/deployment_package_lf1.zip lambda_function.py
+      - mv Lambda/LF2.py lambda_function.py
+      - zip -g build/deployment_package_lf2.zip lambda_function.py
+
+      - echo "Deploying lambda Function..."
+      - cd build
+      - aws lambda update-function-code --function-name Call_LF0 --zip-file fileb://deployment_package_lf0.zip
+      - aws lambda update-function-code --function-name LF0 --zip-file fileb://deployment_package_lf1.zip
+      - aws lambda update-function-code --function-name LF2 --zip-file fileb://deployment_package_lf2.zip
+      - echo "DONE!!"
+
+
+artifacts:
+  files:
+    - 'build/*'
